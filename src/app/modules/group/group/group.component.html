@@ -1,0 +1,356 @@
+<div class="flex flex-col h-full w-full overflow-auto" *ngIf="groupDetails">
+    <ng-container *ngTemplateOutlet="currentTemplate"></ng-container>    
+    <!-- <ng-container *ngTemplateOutlet="enteredGroup"></ng-container>     -->
+</div>
+
+<!-- Groups choices (with or without email) -->
+<ng-template #welcomeTab>
+    <div class="grid grid-cols-1 xs:grid-cols-4 h-full">
+        <div class="xs:col-start-2 col-span-2 flex flex-col items-center justify-center">
+            <form
+                [formGroup]="userForm"
+                (ngSubmit)="enterGroup()"
+                class="flex flex-1 flex-col w-[90%] xs:w-full gap-[5%] justify-center">
+                <label class="wrap-break-word font-bold text-y500 text-fluid-24 drop-shadow text-center">Welcome to <span class="text-light">{{groupDetails?.name}}</span>!</label>
+                <div class="flex flex-col gap-fluid-12">
+                    <div class="flex flex-col flex-1 min-w-0 w-[80%] self-center">
+                        <label class="text-y500 font-bold text-fluid-16">User ID</label>
+                        <input
+                            formControlName="userId" 
+                            class="truncate bg-white/80 text-grey rounded-md text-fluid-16 p-fluid-8 w-full"
+                            placeholder="Let us know who you are..."
+                            type="text">
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap justify-center items-center gap-fluid-12">
+                    <button type="submit" [disabled]="userForm.invalid" class="text-g500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+                        Enter
+                    </button>
+                    <button *ngIf="isAllowedToJoin" (click)="isNewUser = true" type="button" class="text-light text-fluid-16 font-bold bg-b500 rounded-full px-fluid-20 py-fluid-4 hover:bg-b500/80 self-center">
+                        Join
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <ng-container *ngIf="isNewUser">
+        <form
+            [formGroup]="newUserForm"
+            (ngSubmit)="createNewUser()"
+            class="fixed top-0 flex flex-col justify-center items-center z-50 h-full w-full backdrop-blur-sm">
+                <!-- <div class="fixed flex flex-col justify-center items-center top-0 z-50 h-full w-full backdrop-blur-sm"> -->
+            <div class="bg-red-700 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 text-center shadow-md">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+                    <label class="font-bold text-y600 text-fluid-16">Enter your details</label>
+                    <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                        placeholder="Name"
+                        formControlName="name">
+                    <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                        placeholder="Email Address (Optional)"
+                        formControlName="email"
+                        type="email">
+                    <div class="flex flex-wrap justify-end items-center gap-fluid-12">
+                        <button type="button" (click)="isNewUser = false" class="text-light text-fluid-16 font-bold bg-r500 rounded-full px-fluid-20 py-fluid-4 hover:bg-r500/80 self-center">
+                            Cancel
+                        </button>
+                        <button type="submit" [disabled]="newUserForm.invalid" class="text-g500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+                            Enter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </ng-container>
+</ng-template>
+
+<ng-template #enteredGroup>
+    <div *ngIf="groupDetails" class="flex flex-col overflow-auto px-fluid-30 pb-fluid-30 h-full gap-fluid-12">
+        <div class="flex flex-col w-full justify-center gap-fluid-12">
+            <div class="flex flex-col xs:flex-row items-start xs:gap-fluid-4">
+                <label class="break-all line-clamp-2 text-ellipsis font-bold text-light text-fluid-24 drop-shadow flex-1">{{groupDetails.name}}</label>
+                <div class="flex flex-row gap-fluid-12 items-center justify-between">
+                    <div class="flex flex-wrap text-white text-fluid-14 break-all line-clamp-2 text-ellipsis gap-fluid-4">
+                        <label class="line-clamp-2">Group Code: <b class="select-all">{{groupDetails.code}}</b></label>
+                        <label *ngIf="!isAdmin" class="line-clamp-2">User ID: <b class="select-all">{{userDetails?.userId}}</b></label>
+                        <label *ngIf="isAdmin" class="line-clamp-2">Admin ID: <b class="select-all">{{groupDetails.adminId}}</b></label>
+                    </div>
+                    <label (click)="reload()" class="cursor-pointer hover:invert-25 text-fluid-30 text-white" title="Refresh group details">🔄️</label>
+                </div>
+            </div>
+            <div class="flex flex-col gap-fluid-8">
+                <div *ngIf="!isAdmin" class="flex flex-col xs:flex-row gap-fluid-12 justify-center">
+                    <button (click)="openWishlist()" class="text-light text-fluid-20 font-bold bg-g500 rounded-md px-fluid-20 py-fluid-12 shadow-md hover:bg-g500/80 break-words"
+                        [ngClass]="{'flex-1': userDetails?.pickedName || isAllowedToPick}"
+                        >Your wishlist 🎁</button>
+                    <button *ngIf="userDetails?.pickedName" (click)="openOtherWishlist(userDetails?.pickedId)" class="flex-1 text-light text-fluid-20 font-bold bg-r500 rounded-md px-fluid-20 py-fluid-12 shadow-md hover:bg-r500/80 break-words"
+                        >{{userDetails?.pickedName}}'s wishlist 🎁</button>
+                    <button *ngIf="isAllowedToPick" (click)="pickName()" [disabled]="!isAllowedToPick" class="flex-2 text-light text-fluid-20 font-bold bg-y600 rounded-md px-fluid-20 py-fluid-12 shadow-md hover:bg-y600/80 break-words"
+                        >Pick a name</button>
+                </div>
+                <ng-container *ngIf="isGroupOpen; else isGroupClosed">
+                    <p *ngIf="namesLeft.length > 0; else noNameLeft" class="text-light text-fluid-16 text-center self-center">{{namesLeft.length > 1 ? `There are currently ${namesLeft.length} participants` : `There is only ${namesLeft.length} participant`}} left to be picked!</p>
+                </ng-container>
+                <ng-template #isGroupClosed>
+                    <p *ngIf="namesLeft.length > 0; else noNameLeft" class="text-light text-fluid-16 text-center self-center">{{namesLeft.length > 1 ? `${namesLeft.length} participants have` : `Only 1 participant has`}} not been picked!</p>
+                    
+                    <p *ngIf="groupDetails.startDate > dateToday" class="text-white px-fluid-6 rounded-full bg-r500 text-fluid-16 text-center self-center">Group hasn't started yet.</p>
+                    <p *ngIf="groupDetails.endDate < dateToday" class="text-white px-fluid-6 rounded-full bg-r500 text-fluid-16 text-center self-center">Group has already ended.</p>
+                </ng-template>
+                <ng-template #noNameLeft>
+                    <p class="text-light text-fluid-16 text-center self-center">All participants have been picked!</p>
+                </ng-template>
+            </div>
+        </div>
+        <div class="flex flex-col gap-fluid-12 flex-2 h-0">
+            <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0">
+                <div class="flex flex-wrap justify-between text-grey text-fluid-16 p-fluid-8 pb-0">
+                    <label class="font-bold drop-shadow">Participants</label>
+                    <label (click)="isShowingRules = true" class="cursor-pointer hover:invert-25 text-b500">Group Rules ℹ️</label>
+                </div>
+                <div *ngIf="groupDetails && groupDetails.participants.length" class="grid grid-cols-1 xs:grid-cols-2 gap-fluid-8 overflow-y-auto overflow-x-hidden p-fluid-8 whitespace-normal">
+                    <div *ngFor="let participant of groupDetails.participants" class="flex flex-col px-fluid-8 py-fluid-4 rounded-md justify-center bg-grey/50"
+                        [ngClass]="{
+                            'bg-grey/50': true,
+                            'bg-y600/50': participant.hasPickedAt &&
+                                (
+                                    (isAdmin && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_HAS_PICKED)) ||
+                                    (!isAdmin && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_HAS_PICKED))
+                                ),
+                            '!bg-b500/50': participant.wasPickedAt &&
+                                (
+                                    (isAdmin && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_WAS_PICKED)) ||
+                                    (!isAdmin && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_WAS_PICKED))
+                                ),
+                            '!bg-g500/50': participant.status === publicParticipantStatus.DONE &&
+                                (
+                                    (isAdmin && (groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_HAS_PICKED) && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_WAS_PICKED))) ||
+                                    (!isAdmin && (groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_HAS_PICKED) && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_WAS_PICKED)))
+                                ),
+                        }">
+                        <div class="flex flex-wrap gap-fluid-1 justify-between items-center">
+                            <div class="max-w-[100%] overflow-hidden">
+                                <p class="text-fluid-16 text-white break-all">{{participant.name}}
+                                    <span *ngIf="isAdmin && participant.email" class="text-fluid-14 text-white/80">{{participant.email}}</span>
+                                </p>
+                                <div *ngIf="(isAdmin && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_PICKS)) ||
+                                        (!isAdmin && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_PICKS))"
+                                    class="flex flex-wrap gap-fluid-2">
+                                    <span *ngIf="participant.pickedName && participant.pickedByName; else pickedContainer"
+                                        class="text-fluid-12 text-light">
+                                        Picked {{participant.pickedName}} and picked by {{participant.pickedByName}}
+                                    </span>
+                                    <ng-template #pickedContainer>
+                                        <span *ngIf="participant.pickedName" 
+                                            class="text-fluid-12 text-light">Picked {{participant.pickedName}}</span>
+                                        <span *ngIf="participant.pickedByName"
+                                            class="text-fluid-12 text-light">Picked by {{participant.pickedByName}}</span>
+                                    </ng-template>
+                                </div>
+                            </div>
+                            <div class="max-w-[100%] overflow-hidden">
+                                <p *ngIf="isAdmin" class="text-fluid-14 text-light truncate">(<span class="select-all">{{participant.userId}}</span>)</p>
+                                <p *ngIf="!isAdmin && (participant.userId === userDetails?.userId)"
+                                    class="text-fluid-14 text-light truncate">(you)</p>
+                                <p *ngIf="!isAdmin && (participant.userId === pickedParticipant?.userId)"
+                                    class="text-fluid-14 text-light truncate">(your monito)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div *ngIf="(isAdmin && (groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_HAS_PICKED) || (groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_WAS_PICKED)))) ||
+                    (!isAdmin && (groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_HAS_PICKED) || groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_WAS_PICKED)))"
+                class="flex flex-col bg-white/80 rounded-md gap-fluid-8 max-h-full">
+                <div class="flex flex-row flex-wrap justify-center text-fluid-12 flex-1 min-h-0 max-h-full overflow-y-auto overflow-x-hidden p-fluid-8 gap-fluid-8 whitespace-normal">
+                    <p *ngIf="true"
+                        class="before:w-fluid-16 before:p-fluid-16 before:me-fluid-6 before:bg-grey text-grey truncate font-bold">Pending</p>
+                    <p *ngIf="(isAdmin && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_HAS_PICKED)) ||
+                            (!isAdmin && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_HAS_PICKED))"
+                        class="before:w-fluid-16 before:p-fluid-16 before:me-fluid-6 before:bg-y600 text-y600 truncate font-bold">Has already picked</p>
+                    <p *ngIf="(isAdmin && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_WAS_PICKED)) ||
+                            (!isAdmin && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_WAS_PICKED))"
+                        class="before:w-fluid-16 before:p-fluid-16 before:me-fluid-6 before:bg-b500 text-b500 truncate font-bold">Has been picked</p>
+                    <p *ngIf="(isAdmin && (groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_HAS_PICKED) && groupDetails.rules.includes(publicGroupRules.ADMIN_VISIBLE_WAS_PICKED))) ||
+                            (!isAdmin && (groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_HAS_PICKED) && groupDetails.rules.includes(publicGroupRules.ALL_VISIBLE_WAS_PICKED)))"
+                        class="before:w-fluid-16 before:p-fluid-16 before:me-fluid-6 before:bg-g500 text-g500 truncate font-bold">Has picked and has been picked</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col xs:flex-row flex-wrap justify-between items-center gap-fluid-12">
+            <div class="flex flex-wrap justify-end items-center gap-fluid-12 text-fluid-14 text-light">
+                <p>Duration: {{groupDetails.startDate | date: 'MMMM d, yyyy'}} - {{groupDetails.endDate | date: 'MMMM d, yyyy'}}</p>
+            </div>
+            <div class="flex flex-wrap justify-center xs:justify-end items-center gap-fluid-12">
+                <button *ngIf="isAdmin" (click)="deleteGroup()" type="button" class="text-light text-fluid-16 font-bold bg-r500 rounded-full px-fluid-20 py-fluid-4 hover:bg-r500/80 self-start">
+                    Delete
+                </button>
+                <button *ngIf="isAdmin" (click)="editGroup()" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-start">
+                    Edit
+                </button>
+                <button (click)="exitGroup()" type="button" class="text-r500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-start">
+                    Exit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <ng-container>    
+        <div #blurredBg (click)="hidePickedName()" class="fixed hidden justify-center self-center text-center h-full w-full"></div>
+        <div #pickedNameContainer class="fixed hidden flex-col rounded-md bg-y500 justify-center self-center text-center top-0 bottom-0 wrap-anywhere max-h-[90%] w-[80%] sm:w-[50%] p-[2%] shadow-md backface-hidden">
+            <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8 max-h-full">
+                <p class="text-fluid-24 font-bold drop-shadow text-b500">You picked...</p>
+                <span class="text-fluid-50 text-g500 font-bold overflow-auto">
+                    {{pickedParticipant?.name}}!
+                </span>
+                <p class="text-fluid-14 text-grey">Click anywhere outside to close</p>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isShowingRules">
+        <div class="fixed top-0 flex flex-col justify-center items-center z-50 h-full w-full backdrop-blur-sm">
+            <div class="bg-b500 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 text-center shadow-md">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8 max-h-full">
+                    <label class="font-bold text-grey text-fluid-16">Group Rules</label>
+                    <div *ngIf="groupDetails && groupDetails.rules.length; else noRules" class="overflow-auto text-grey text-fluid-16">
+                        <ng-container *ngFor="let groupRule of groupDetails?.rules">
+                            <ng-container *ngFor="let rule of publicGroupRulesLabel">
+                                <p *ngIf="rule.value === groupRule">{{rule.label}}{{groupRule === publicGroupRules.ANYONE_CAN_JOIN && groupDetails.cutoffDate > 0 ? ` until ${groupDetails.cutoffDate | date: 'MMMM d, yyyy'}` : ''}}</p>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+                    <ng-template #noRules>
+                        <p class="overflow-auto text-grey text-fluid-16">No rule has been set.</p>
+                    </ng-template>
+                    
+                    <button type="button" (click)="isShowingRules = false" class="text-light text-fluid-16 font-bold bg-r500 rounded-full px-fluid-20 py-fluid-4 hover:bg-r500/80 self-center">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isDeleting">
+        <div class="fixed top-0 flex flex-col justify-center items-center z-50 h-full w-full backdrop-blur-sm">
+            <div class="bg-r500 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 text-center shadow-md">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8 max-h-full">
+                    <label class="font-bold text-grey text-fluid-16">Delete Group?</label>
+                    
+                    <p class="overflow-auto text-grey text-fluid-16">Are you sure you want to delete <strong>{{groupDetails?.name}}?</strong><br/>This cannot be undone.</p>
+                    
+                    <div class="flex flex-wrap justify-center items-center gap-fluid-12">
+                        <button *ngIf="isAdmin" (click)="isDeleting = false" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-start">
+                            Cancel
+                        </button>
+                        <button *ngIf="isAdmin" (click)="deleteGroup(true)" type="button" class="text-light text-fluid-16 font-bold bg-r500 rounded-full px-fluid-20 py-fluid-4 hover:bg-r500/80 self-start">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isWishlistOpen">
+        <div class="fixed top-0 flex flex-col justify-center items-center z-50 h-full w-full backdrop-blur-sm">
+            <div class="bg-g500 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 shadow-md">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8 max-h-full">
+                    <label class="font-bold text-grey text-fluid-16 text-center">Your wishlist 🎁</label>
+                    <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fluid-250 sm:max-h-full">
+                        <div class="flex flex-row justify-between p-fluid-8 pb-0 text-fluid-16">
+                            <label class="text-grey font-bold drop-shadow">Wishes</label>
+                            <div class="flex flex-wrap gap-fluid-4 items-center">
+                                <i *ngIf="wishlistForm.get('wishlist')?.touched && wishlistForm.get('wishlist')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(wishlistForm.get('wishlist'))}}</i>
+                                <i class="text-grey">{{wishlist.length || 0}}/{{maxWishlist}}</i>
+                            </div>
+                        </div>
+                        <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                        <div class="flex flex-col flex-1 max-h-fluid-300 sm:max-h-full sm:h-full overflow-auto p-fluid-8 pt-0 whitespace-normal text-fluid-18 gap-fluid-4">
+                            <ng-container *ngIf="wishlist.length; else noWishlist">
+                                <app-wishlist-item
+                                    *ngFor="let wish of wishlist; index as i"
+                                    [data]="wish"
+                                    [hasRemoveButton]="(groupDetails && groupDetails.endDate < dateToday) ? false : true"
+                                    (removeClicked)="removeWish($event, i)"
+                                ></app-wishlist-item>
+                            </ng-container>
+                            <ng-template #noWishlist>
+                                <p class="overflow-auto text-grey text-fluid-16">You don't have anything on your wishlist.</p>
+                            </ng-template>
+                        </div>
+                    </div>
+                    <form [formGroup]="wishlistForm"
+                        (ngSubmit)="updateWishlist()" class="flex flex-col flex-1 gap-fluid-12 w-full"
+                        *ngIf="groupDetails && groupDetails.endDate > dateToday">
+                        <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+                            <label class="font-bold text-y600 text-fluid-16 drop-shadow">Add item to your wishlist</label>
+                            <div class="flex flex-col">
+                                <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                                    placeholder="Name"
+                                    formControlName="name">
+                                <i *ngIf="wishlistForm.get('name')?.touched && wishlistForm.get('name')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(wishlistForm.get('name'))}}</i>
+                            </div>
+                            <div class="flex flex-col">
+                                <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                                    placeholder="Url (Optional)"
+                                    formControlName="url">
+                                <i *ngIf="wishlistForm.get('url')?.touched && wishlistForm.get('url')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(wishlistForm.get('url'))}}</i>
+                            </div>
+                            <button type="button" (click)="addWishlist()" class="text-y600 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-end">Add</button>
+                        </div>
+                        
+                    </form>
+
+                    <div class="flex flex-wrap justify-center items-center gap-fluid-12">
+                        <button (click)="closeWishlist()" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-start">
+                            Close
+                        </button>
+                        <button *ngIf="groupDetails && groupDetails.endDate > dateToday" (click)="updateWishlist()" [disabled]="wishlistForm.untouched" type="button" class="text-light text-fluid-16 font-bold bg-b500 rounded-full px-fluid-20 py-fluid-4 hover:bg-b500/80 self-start">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isOtherWishlistOpen && otherParticipant">
+        <div class="fixed top-0 flex flex-col justify-center items-center z-50 h-full w-full backdrop-blur-sm">
+            <div class="bg-r500 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 shadow-md">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8 max-h-full">
+                    <label class="font-bold text-grey text-fluid-16 text-center">{{otherParticipant.name}}'s' wishlist 🎁</label>
+                    <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fluid-250 sm:max-h-full">
+                        <div class="flex flex-row justify-between p-fluid-8 pb-0 text-fluid-16">
+                            <label class="text-grey font-bold drop-shadow">Wishes</label>
+                            <div class="flex flex-wrap gap-fluid-4 items-center">
+                                <i class="text-grey">{{otherParticipant.wishlist.length}}/{{maxWishlist}}</i>
+                            </div>
+                        </div>
+                        <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                        <div class="flex flex-col flex-1 max-h-fluid-300 sm:max-h-full sm:h-full overflow-auto p-fluid-8 pt-0 whitespace-normal text-fluid-18 gap-fluid-4">
+                            <ng-container *ngIf="otherParticipant.wishlist.length; else noWishlist">
+                                <app-wishlist-item
+                                    *ngFor="let wish of otherParticipant.wishlist; index as i"
+                                    [data]="wish"
+                                    [hasRemoveButton]="false"
+                                ></app-wishlist-item>
+                            </ng-container>
+                            <ng-template #noWishlist>
+                                <p class="overflow-auto text-grey text-fluid-16">{{otherParticipant.name}} doesn't have anything on their wishlist.</p>
+                            </ng-template>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap justify-center items-center gap-fluid-12">
+                        <button (click)="isOtherWishlistOpen = false" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-start">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+</ng-template>

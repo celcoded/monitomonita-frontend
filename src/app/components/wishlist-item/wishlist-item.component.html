@@ -1,0 +1,28 @@
+@if (data) {
+  <div
+    style="font-size: inherit;"
+    tabindex="0"
+    class="name-container group flex justify-between items-center p-fluid-4 pe-fluid-8 rounded-md hover:bg-white/80"
+    [ngClass]="{'cursor-not-allowed bg-grey/20': data.isDisabled, 'hover:bg-white/80': !data.isDisabled}"
+    >
+    <div
+      style="font-size: inherit;"
+      [title]="data.name + (data.url ? ' | ' + data.url : '')" class="flex flex-col flex-1 overflow-x-hidden">
+      <p
+        style="font-size: inherit;"
+      class="truncate text-b500">{{data.name}}</p>
+      <a
+        target="_blank"
+        [href]="data.url || ''"
+        style="font-size: inherit;"
+      class="truncate text-grey">{{data.url}}</a>
+    </div>
+    @if (hasRemoveButton && !data.isRemovable) {
+      <svg
+        (click)="removeButtonClicked(data)"
+        class="close-button hidden group-hover:block hover:cursor-pointer w-fluid-20 h-fluid-20" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5.45327 0L0 5.56815L2.78465 8.41147L9.66893 15.5592L2.78465 22.5885L0 25.3134L5.45327 31L8.23793 28.1567L15.2382 21.0089L22.1225 28.1567L24.7911 31L30.3604 25.3134L27.5758 22.5885L20.5755 15.5592L27.5758 8.41147L30.3604 5.56815L24.7911 0L22.1225 2.84331L15.2382 9.87261L8.23793 2.84331L5.45327 0Z" fill="#951200"/>
+      </svg>
+    }
+  </div>
+}

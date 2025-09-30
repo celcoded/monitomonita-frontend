@@ -1,0 +1,14 @@
+@reference '../../../styles.css';
+
+:host {
+    font-size: inherit;
+}
+
+@media (hover: none) {
+    .name-container:focus {
+        @apply bg-white/80;
+        .close-button {
+            display: block;
+        }
+    }
+}

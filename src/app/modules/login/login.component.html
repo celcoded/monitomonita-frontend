@@ -1,0 +1,23 @@
+<div class="h-screen overflow-auto w-full background">
+    <div class="grid grid-cols-1 sm:grid-cols-4 h-full">
+        <div class="sm:col-start-2 col-span-2 flex flex-col items-center justify-center gap-fluid-4">
+            <img style="width: calc(10px + 50vmin);" class="animate-light mx-auto" src="./Images/logo1-1000px.png">
+            <!-- <app-textbox class="text-fluid-16 sm:w-fluid-300 w-[80%] block"
+                type="text"
+                label="Email">
+            </app-textbox> -->
+            <app-textbox class="text-fluid-16 sm:w-fluid-300 w-[80%] block"
+                type="text"
+                label="Username or email">
+            </app-textbox>
+            <app-textbox class="text-fluid-16 sm:w-fluid-300 w-[80%] block"
+                type="password"
+                label="Password">
+            </app-textbox>
+            <div class="flex flex-col gap-fluid-8 mt-fluid-20">
+                <button class="text-r500 text-fluid-16 font-bold bg-light rounded-full px-fluid-8 py-fluid-4 hover:bg-light/80">Login</button>
+                <button class="text-light text-fluid-16 font-bold" routerLink="/register">Register</button>
+            </div>
+        </div>
+    </div>
+</div>

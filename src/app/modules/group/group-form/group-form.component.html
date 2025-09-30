@@ -1,0 +1,133 @@
+<div class="flex flex-col h-full w-full">
+  <label class="font-bold text-y500 text-fluid-24 drop-shadow text-center">{{formDetails.title || 'Create a Group'}}</label>
+  <form
+    [formGroup]="groupForm"
+    (ngSubmit)="submitButtonClicked()"
+    class="flex flex-col flex-1 h-full overflow-auto p-fluid-20 gap-fluid-12">
+    <!-- flex-row unless sm, h-[1px] unless sm -->
+    <div class="flex flex-col sm:flex-row flex-none sm:flex-1 h-auto sm:h-[1px] gap-fluid-12">
+      <!-- w-0 unless sm -->
+      <div class="flex flex-col flex-1 gap-fluid-12 w-full sm:w-0">
+        <div class="flex flex-col">
+          <input formControlName="name" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+            placeholder="Group Name" [maxLength]="100">
+            @if (groupForm.get('name')?.touched && groupForm.get('name')?.invalid) {
+              <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('name'))}}</i>
+            }
+          </div>
+          <ng-container>
+            <div class="flex flex-col">
+              <input formControlName="adminEmail" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                placeholder="Admin's Email Address (Optional)">
+                @if (groupForm.get('adminEmail')?.touched && groupForm.get('adminEmail')?.invalid) {
+                  <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('adminEmail'))}}</i>
+                }
+              </div>
+              <i class="text-light text-fluid-16">Add your email to receive notifications related to your group and participants.</i>
+
+              <!-- flex-row unless xs -->
+              <div class="flex flex-col xs:flex-row gap-fluid-8">
+                <div class="flex flex-col flex-1 min-w-0">
+                  <label class="text-y500 font-bold text-fluid-16">Start Date</label>
+                  <input formControlName="startDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                    placeholder="When will this group be accessible?"
+                    type="date" [min]="startMinDate" [max]="startMaxDate" (input)="setDateLimits()">
+                    @if (groupForm.get('startDate')?.touched && groupForm.get('startDate')?.invalid) {
+                      <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('startDate'))}}</i>
+                    }
+                  </div>
+
+                  <div class="flex flex-col flex-1 min-w-0">
+                    <label class="text-y500 font-bold text-fluid-16">End Date</label>
+                    <input formControlName="endDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                      placeholder="Until when will this group be accessible?"
+                      type="date" [min]="endMinDate" [max]="endMaxDate" (input)="setDateLimits()">
+                      @if (groupForm.get('endDate')?.touched && groupForm.get('endDate')?.invalid) {
+                        <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('endDate'))}}</i>
+                      }
+                    </div>
+                  </div>
+                </ng-container>
+
+                <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fit">
+                  <label class="text-y600 text-fluid-16 font-bold drop-shadow p-fluid-8 pb-0">Rules</label>
+                  <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                  <div class="flex flex-col text-fluid-18 flex-1 max-h-fluid-300 min-h-0 sm:max-h-fit sm:h-full overflow-y-auto overflow-x-hidden p-fluid-8 pt-fluid-8 gap-fluid-8 whitespace-normal">
+                    <app-checkbox-list
+                      formControlName="rules"
+                      [options]="rules"
+                      (click)="selectedRules()">
+                    </app-checkbox-list>
+                    @if (groupForm.get('rules')?.value.includes(groupRules.ANYONE_CAN_JOIN)) {
+                      <div class="flex flex-col flex-1 min-w-0">
+                        <label class="text-grey font-bold text-fluid-16">Cutoff date for joining</label>
+                        <input formControlName="cutoffDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                          type="date" [max]="cutoffMaxDate">
+                          @if (groupForm.get('cutoffDate')?.touched && groupForm.get('cutoffDate')?.invalid) {
+                            <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('cutoffDate'))}}</i>
+                          }
+                        </div>
+                        <!-- <i class="text-grey text-fluid-16">By default, no one can join after the start date if only one monita/monito is left, unless added manually by the admin.</i> -->
+                      }
+                    </div>
+                  </div>
+                </div>
+                <!-- w-0 unless sm -->
+                <div class="flex flex-col flex-1 gap-fluid-12 w-full sm:w-0">
+                  <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+                    <label class="font-bold text-y600 text-fluid-16 drop-shadow">Add a Participant</label>
+                    <div class="flex flex-col">
+                      <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                        placeholder="Name"
+                        formControlName="newParticipantName">
+                        @if (groupForm.get('newParticipantName')?.touched && groupForm.get('newParticipantName')?.invalid) {
+                          <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('newParticipantName'))}}</i>
+                        }
+                      </div>
+                      <div class="flex flex-col">
+                        <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                          placeholder="Email Address (Optional)"
+                          formControlName="newParticipantEmail"
+                          type="email">
+                          @if (groupForm.get('newParticipantEmail')?.touched && groupForm.get('newParticipantEmail')?.invalid) {
+                            <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('newParticipantEmail'))}}</i>
+                          }
+                        </div>
+                        <button type="button" (click)="addParticipant()" class="text-y600 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-end">Add</button>
+                      </div>
+                      <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fluid-300 sm:max-h-full">
+                        <div class="flex flex-row justify-between p-fluid-8 pb-0 text-fluid-16">
+                          <label class="text-grey font-bold drop-shadow">Participants</label>
+                          <div class="flex flex-wrap gap-fluid-4 items-center">
+                            @if (groupForm.get('participants')?.touched && groupForm.get('participants')?.invalid) {
+                              <i class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('participants'))}}</i>
+                            }
+                            <i class="text-grey">{{groupForm.get('participants')?.value.length || 0}}/{{maxParticipants}}</i>
+                          </div>
+                        </div>
+                        <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                        <div class="flex flex-col flex-1 max-h-fluid-300 sm:max-h-full sm:h-full overflow-auto p-fluid-8 pt-0 whitespace-normal text-fluid-18 gap-fluid-4">
+                          @for (participant of participants; track participant; let i = $index) {
+                            <app-email-name
+                              [data]="participant"
+                              [hasRemoveButton]="!participant.isRemovable"
+                              (removeClicked)="removeParticipant($event, i)"
+                            ></app-email-name>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <i class="text-light text-fluid-12 text-center">Anything you do on this app means you accept our terms — check them out in the Help section.</i>
+                  <div class="flex flex-wrap gap-fluid-12 justify-center">
+                    @if (formDetails.cancelButtonText) {
+                      <button (click)="cancelButtonClicked()" type="button" class="text-light text-fluid-16 font-bold bg-r500 rounded-full px-fluid-20 py-fluid-4 hover:bg-r500/80 self-center">
+                        {{formDetails.cancelButtonText || 'Cancel'}}
+                      </button>
+                    }
+                    <button type="submit" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+                      {{formDetails.submitButtonText || 'Create'}}
+                    </button>
+                  </div>
+                </form>
+              </div>

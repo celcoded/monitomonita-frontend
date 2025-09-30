@@ -1,0 +1,20 @@
+<app-group-form [formDetails]="formDetails" (submitClicked)="submitClicked($event)"></app-group-form>
+
+@if (groupDetails) {
+  <div class="fixed flex flex-col justify-center items-center top-0 z-50 h-full w-full backdrop-blur-sm">
+    <div class="bg-red-700 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 text-center shadow-md">
+      <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+        <p class="font-bold text-y600 text-fluid-20 text-center">Group has been created!</p>
+        <div class="my-fluid-12">
+          <p class="text-b500 text-fluid-18">Group Name: <b class="select-all">{{groupDetails.name}}</b></p>
+          <p class="text-b500 text-fluid-18">Group Code: <b class="select-all">{{groupDetails.code}}</b></p>
+          <p class="text-b500 text-fluid-18">Admin's User ID: <b class="select-all">{{groupDetails.adminId}}</b></p>
+          <i class="text-grey text-fluid-16">Make sure to save the code and ID! If you entered an email address, these will be sent to you.</i>
+        </div>
+        <button [routerLink]="`/group/${groupDetails.code}`" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+          Enter Group
+        </button>
+      </div>
+    </div>
+  </div>
+}

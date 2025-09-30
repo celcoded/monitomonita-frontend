@@ -1,0 +1,14 @@
+<div class="fixed bottom-0 right-0 flex flex-col gap-fluid-6 m-fluid-14 wrap-break-word max-w-[70%] xs:max-w-[50%] sm:max-w-[30%] min-w-[30%] text-light" style="z-index: 999;">
+  @for (toast of toastService.toasts; track toast; let i = $index) {
+    <div (click)="removeToast(i)" class="p-fluid-12 shadow-md rounded-md"
+        [ngClass]="{
+            'bg-grey/90': toast.type === publicToastTypes.DEFAULT,
+            'bg-yellow-700/90': toast.type === publicToastTypes.WARNING,
+            'bg-red-700/90': toast.type === publicToastTypes.ERROR,
+            'bg-green-700/90': toast.type === publicToastTypes.SUCCESS,
+        }">
+      <p class="text-fluid-18 font-bold">{{toast.text}}</p>
+      <p class="text-fluid-16">{{toast.subtext}}</p>
+    </div>
+  }
+</div>

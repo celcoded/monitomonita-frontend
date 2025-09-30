@@ -1,0 +1,127 @@
+/* <div class="flex flex-col h-full w-full">
+    <label class="font-bold text-y500 text-fluid-24 drop-shadow text-center">Create a Group</label>
+    <form
+        [formGroup]="groupForm"
+        (ngSubmit)="onCreateButtonClicked()"
+        class="flex flex-col flex-1 h-full overflow-auto p-fluid-20 gap-fluid-12">
+        <!-- flex-row unless sm, h-[1px] unless sm -->
+        <div class="flex flex-col sm:flex-row flex-none sm:flex-1 h-auto sm:h-[1px] gap-fluid-12">
+            <!-- w-0 unless sm -->
+            <div class="flex flex-col flex-1 gap-fluid-12 w-full sm:w-0">
+                <div class="flex flex-col">
+                    <input formControlName="name" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                        placeholder="Group Name" [maxLength]="100">
+                    <i *ngIf="groupForm.get('name')?.touched && groupForm.get('name')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('name'))}}</i>
+                </div>
+                <ng-container>
+                    <div class="flex flex-col">
+                        <input formControlName="adminEmail" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                        placeholder="Admin's Email Address (Optional)">
+                        <i *ngIf="groupForm.get('adminEmail')?.touched && groupForm.get('adminEmail')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('adminEmail'))}}</i>
+                    </div>
+                    <i class="text-light text-fluid-16">Add your email to receive notifications related to your group and participants.</i>
+                
+                    <!-- flex-row unless xs -->
+                    <div class="flex flex-col xs:flex-row gap-fluid-8">
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <label class="text-y500 font-bold text-fluid-16">Start Date</label>
+                            <input formControlName="startDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                                placeholder="When will this group be accessible?"
+                                type="date" [min]="startMinDate" [max]="startMaxDate" (input)="setDateLimits()">
+                            <i *ngIf="groupForm.get('startDate')?.touched && groupForm.get('startDate')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('startDate'))}}</i>
+                        </div>
+                        
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <label class="text-y500 font-bold text-fluid-16">End Date</label>
+                            <input formControlName="endDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                                placeholder="Until when will this group be accessible?"
+                                type="date" [min]="endMinDate" [max]="endMaxDate" (input)="setDateLimits()">
+                            <i *ngIf="groupForm.get('endDate')?.touched && groupForm.get('endDate')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('endDate'))}}</i>
+                        </div>
+                    </div>
+                </ng-container>
+                
+                <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fit">
+                    <label class="text-y600 text-fluid-16 font-bold drop-shadow p-fluid-8 pb-0">Rules</label>
+                    <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                    <div class="flex flex-col text-fluid-18 flex-1 max-h-fluid-300 min-h-0 sm:max-h-fit sm:h-full overflow-y-auto overflow-x-hidden p-fluid-8 pt-fluid-8 gap-fluid-8 whitespace-normal">
+                        <app-checkbox-list
+                            formControlName="rules"
+                            [options]="rules"
+                            (click)="selectedRules()">
+                        </app-checkbox-list>
+                        <ng-container *ngIf="groupForm.get('rules')?.value.includes(groupRules.ANYONE_CAN_JOIN)">
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <label class="text-grey font-bold text-fluid-16">Cutoff date for joining</label>
+                                <input formControlName="cutoffDate" class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8 w-full"
+                                    type="date" [min]="endMinDate" [max]="cutoffMaxDate">
+                                <i *ngIf="groupForm.get('cutoffDate')?.touched && groupForm.get('cutoffDate')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('cutoffDate'))}}</i>
+                            </div>
+                            <i class="text-grey text-fluid-16">By default, no one can join after the start date if only one monita/monito is left, unless added manually by the admin.</i>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+            <!-- w-0 unless sm -->
+            <div class="flex flex-col flex-1 gap-fluid-12 w-full sm:w-0">
+                <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+                    <label class="font-bold text-y600 text-fluid-16 drop-shadow">Add a Participant</label>
+                    <div class="flex flex-col">
+                        <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                            placeholder="Name"
+                            formControlName="newParticipantName">
+                        <i *ngIf="groupForm.get('newParticipantName')?.touched && groupForm.get('newParticipantName')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('newParticipantName'))}}</i>
+                    </div>
+                    <div class="flex flex-col">
+                        <input class="truncate bg-white/80 text-grey rounded-md text-fluid-18 p-fluid-8"
+                            placeholder="Email Address (Optional)"
+                            formControlName="newParticipantEmail"
+                            type="email">
+                        <i *ngIf="groupForm.get('newParticipantEmail')?.touched && groupForm.get('newParticipantEmail')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('newParticipantEmail'))}}</i>
+                    </div>
+                    <button type="button" (click)="addParticipant()" class="text-y600 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-end">Add</button>
+                </div>
+                <div class="flex flex-col flex-1 bg-white/80 rounded-md gap-fluid-8 min-h-0 max-h-fluid-300 sm:max-h-full">
+                    <div class="flex flex-row justify-between p-fluid-8 pb-0 text-fluid-16">
+                        <label class="text-grey font-bold drop-shadow">Participants</label>
+                        <div class="flex flex-wrap gap-fluid-4 items-center">
+                            <i *ngIf="groupForm.get('participants')?.touched && groupForm.get('participants')?.invalid" class="truncate text-fluid-14 text-red-500">{{getErrorMessage(groupForm.get('participants'))}}</i>
+                            <i class="text-grey">{{groupForm.get('participants')?.value.length || 0}}/{{maxParticipants}}</i>
+                        </div>
+                    </div>
+                    <!-- h-full unless sm, max-h-fluid-300 if sm -->
+                    <div class="flex-1 max-h-fluid-300 sm:max-h-full sm:h-full overflow-auto p-fluid-8 pt-0 whitespace-normal text-fluid-18">
+                        <app-email-name
+                            *ngFor="let participant of participants; index as i"
+                            [data]="participant"
+                            [hasRemoveButton]="!participant.isDisabled"
+                            (removeClicked)="removeParticipant($event, i)"
+                        ></app-email-name>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+            Create
+        </button>
+    </form>
+</div>
+
+<ng-container *ngIf="groupDetails">
+    <div class="fixed flex flex-col justify-center items-center top-0 z-50 h-full w-full backdrop-blur-sm">
+        <div class="bg-red-700 rounded-md max-h-[90%] w-[80%] sm:w-[50%] wrap-break-word p-fluid-12 text-center shadow-md">
+            <div class="flex flex-col justify-center bg-white/80 rounded-md gap-fluid-8 p-fluid-8">
+                <p class="font-bold text-y600 text-fluid-20 text-center">Group has been created!</p>
+                <div class="my-fluid-12">
+                    <p class="text-b500 text-fluid-18">Group Name: <b class="select-all">{{groupDetails.name}}</b></p>
+                    <p class="text-b500 text-fluid-18">Group Code: <b class="select-all">{{groupDetails.code}}</b></p>
+                    <p class="text-b500 text-fluid-18">Admin's User ID: <b class="select-all">{{groupDetails.adminId}}</b></p>
+                    <i class="text-grey text-fluid-16">Make sure to save the code and ID! If you entered an email address, these will be sent to you.</i>
+                </div>
+                <button [routerLink]="`/group/${groupDetails.code}`" type="button" class="text-b500 text-fluid-16 font-bold bg-light rounded-full px-fluid-20 py-fluid-4 hover:bg-light/80 self-center">
+                    Enter Group
+                </button>
+            </div>
+        </div>
+    </div>
+</ng-container> */
