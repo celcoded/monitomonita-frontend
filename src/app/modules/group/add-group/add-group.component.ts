@@ -1,4 +1,3 @@
-
 import { Component, inject, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { groupRules } from '../../../enums/group';
@@ -24,9 +23,9 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './add-group.component.css'
 })
 export class AddGroupComponent implements OnDestroy {
-  router = inject(Router);
-  groupService = inject(GroupService);
-  toastService = inject(ToastService);
+  router: Router;
+  groupService: GroupService;
+  toastService: ToastService;
   groupForm: FormGroup;
   groupRules = groupRules;
   maxParticipants: number = environment.maxParticipants || 10;
@@ -39,6 +38,10 @@ export class AddGroupComponent implements OnDestroy {
   constructor(
     private formBuilder: FormBuilder,
   ) {
+    this.router = inject(Router);
+    this.groupService = inject(GroupService);
+    this.toastService = inject(ToastService);
+
     this.groupForm = formBuilder.group({
       name: [null, [Validators.required, Validators.minLength(3)]],
       adminEmail: [null],

@@ -14,13 +14,17 @@ import moment from 'moment';
 })
 export class GroupService {
   baseUrl = `${environment.baseUrl}/groups`;
-  http = inject(HttpClient);
-  router = inject(Router);
-  userService = inject(UserService);
-
   currentGroup$ = new BehaviorSubject<IEncryptedData | null>(this.loadCurrentGroup());
-  
+
+  http: HttpClient;
+  router: Router;
+  userService: UserService;
+
   constructor() {
+    this.http = inject(HttpClient);
+    this.router = inject(Router);
+    this.userService = inject(UserService);
+
     if (!this.getAccessTimestamp()) {
       this.setAccessTimestamp();
     }

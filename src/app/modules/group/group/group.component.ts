@@ -17,6 +17,7 @@ import { environment } from '../../../../environments/environment';
 import { wishlistInput } from '../../../interfaces/input';
 import { WishlistItemComponent } from "../../../components/wishlist-item/wishlist-item.component";
 import { validUrlPattern } from '../../../utils/validators';
+import { IEncryptedData } from '../../../interfaces/general';
 
 @Component({
   selector: 'app-group',
@@ -69,11 +70,12 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
   otherParticipant: IParticipant | null = null;
   otherWishlist: wishlistInput[] = [];
 
-  groupService = inject(GroupService);
-  userService = inject(UserService);
-  toastService = inject(ToastService);
-  router = inject(Router);
+  groupService: GroupService;
+  userService: UserService;
+  toastService: ToastService;
+  router: Router;
   subscriptions = new Subscription();
+  // store: Store;
 
   getErrorMessage = getErrorMessage;
 
@@ -81,6 +83,12 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
     private formBuilder: FormBuilder,
     private changeDetectorRef: ChangeDetectorRef
   ) {
+    this.groupService = inject(GroupService);
+    this.userService = inject(UserService);
+    this.toastService = inject(ToastService);
+    this.router = inject(Router);
+    // this.store = inject(Store);
+
     this.userForm = formBuilder.group({
       userId: [null, [Validators.required]]
     });
@@ -110,15 +118,9 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
           next: async (res) => {
             if (res.data) {
               const data = res.data;
-              decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-                if (decryptedData) {
-                  this.groupService.setCurrentGroup(data);
-                  this.groupDetails = decryptedData;
-
-                  this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
-
-                  this.router.navigate([`/group/${this.code}`]);
-                }
+              this.decryptGroupData(data).then(() => {
+                this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
+                this.router.navigate([`/group/${this.code}`]);
               });
             }
           },
@@ -141,15 +143,9 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
               next: async (res) => {
                 if (res.data) {
                   const data = res.data;
-                  decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-                    if (decryptedData) {
-                      this.groupService.setCurrentGroup(data);
-                      this.groupDetails = decryptedData;
-
-                      this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
-
-                      this.router.navigate([`/group/${this.code}`]);
-                    }
+                  this.decryptGroupData(data).then(() => {
+                    this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
+                    this.router.navigate([`/group/${this.code}`]);
                   });
                 }
               },
@@ -242,16 +238,10 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
         next: async (res) => {
           if (res.data) {
             const data = res.data;
-            decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-              if (decryptedData) {
-                delete decryptedData.newUserId;
-                this.groupService.setCurrentGroup(data);
-                this.groupDetails = decryptedData;
-                this.newUserId = this.groupDetails?.participants[this.groupDetails?.participants.length-1].userId || '';
-
-                this.enterGroup(this.newUserId);
-              }
-            });
+            this.decryptGroupData(data).then(() => {
+              this.newUserId = this.groupDetails?.participants[this.groupDetails?.participants.length-1].userId || '';
+              this.enterGroup(this.newUserId);
+            })
           }
         },
         error: (error) => {
@@ -318,12 +308,7 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
       this.groupService.pickParticipant(this.groupDetails._id, this.userDetails.userId).subscribe({
         next: async (res) => {
           const data = res.data;
-          decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-            if (decryptedData) {
-              this.groupService.setCurrentGroup(data);
-              this.groupDetails = decryptedData;
-              // this.router.navigate([`/group/${this.code}`]);
-            }
+          this.decryptGroupData(data).then(() => {
             this.enterGroup(this.userDetails?.userId);
 
             const pickedName = this.pickedNameContainerRef?.nativeElement;
@@ -457,24 +442,13 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
       await this.groupService.updateWishlist(this.groupDetails._id, this.userDetails?._id || '', wishlist).subscribe({
         next: (res) => {
           const data = res.data;
-          decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-            if (decryptedData) {
-              this.groupService.setCurrentGroup(data);
-              this.groupDetails = decryptedData;
-              this.enterGroup(this.userService.getCurrentUser()?.userId);
-              this.toastService.add({
-                text: 'Updated!',
-                subtext: 'Wishlist has been updated!',
-                type: toastTypes.SUCCESS
-              })
-            } else {
-              this.toastService.add({
-                text: 'Error Occurred!',
-                subtext: 'Please try again later.',
-                type: toastTypes.ERROR
-              })
-            }
-            this.isWishlistOpen = false;
+          this.decryptGroupData(data).then(() => {
+            this.enterGroup(this.userService.getCurrentUser()?.userId);
+            this.toastService.add({
+              text: 'Updated!',
+              subtext: 'Wishlist has been updated!',
+              type: toastTypes.SUCCESS
+            })
           });
         },
         error: (error) => {
@@ -514,24 +488,19 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
         next: async (res) => {
           if (res.data) {
             const data = res.data;
-            decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
-              if (decryptedData) {
-                this.groupService.setCurrentGroup(data);
-                this.groupDetails = decryptedData;
-
-                this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
-                if (this.userService.getCurrentUser() || this.userService.getCurrentAdmin()) {
-                  this.enterGroup(this.userService.getCurrentAdmin() || this.userService.getCurrentUser()?.userId);
-                } else {
-                  this.router.navigate([`/`]);
-                }
-                
-                this.toastService.add({
-                  text: `Refreshed!`,
-                  subtext: 'Group details have been refreshed.',
-                  type: toastTypes.SUCCESS
-                })
+            this.decryptGroupData(data).then(() => {
+              this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
+              if (this.userService.getCurrentUser() || this.userService.getCurrentAdmin()) {
+                this.enterGroup(this.userService.getCurrentAdmin() || this.userService.getCurrentUser()?.userId);
+              } else {
+                this.router.navigate([`/`]);
               }
+              
+              this.toastService.add({
+                text: `Refreshed!`,
+                subtext: 'Group details have been refreshed.',
+                type: toastTypes.SUCCESS
+              })
             });
           }
         },
@@ -541,6 +510,24 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
         }
       })
     )
+  }
+
+  async decryptGroupData(data: IEncryptedData) {
+    await decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
+      if (decryptedData) {
+        if (decryptedData.newUserId) {
+          delete decryptedData.newUserId;
+        }
+        this.groupService.setCurrentGroup(data);
+        this.groupDetails = decryptedData;
+      } else {
+        this.toastService.add({
+          text: 'Error Occurred!',
+          subtext: 'Please try again later.',
+          type: toastTypes.ERROR
+        })
+      }
+    });
   }
 
   ngOnDestroy(): void {

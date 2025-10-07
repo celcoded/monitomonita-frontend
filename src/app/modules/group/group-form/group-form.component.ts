@@ -1,4 +1,3 @@
-
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CheckboxListComponent } from "../../../components/inputs/checkbox-list/checkbox-list.component";
@@ -29,9 +28,9 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './group-form.component.css'
 })
 export class GroupFormComponent implements AfterViewInit, OnDestroy {
-  router = inject(Router);
-  groupService = inject(GroupService);
-  toastService = inject(ToastService);
+  router: Router;
+  groupService: GroupService;
+  toastService: ToastService;
   
   // Form Details
   @Input() formDetails: IGroupFormDetails = {};
@@ -64,6 +63,10 @@ export class GroupFormComponent implements AfterViewInit, OnDestroy {
     private formBuilder: FormBuilder,
     private changeDetectorRef: ChangeDetectorRef
   ) {
+    this.router = inject(Router);
+    this.groupService = inject(GroupService);
+    this.toastService = inject(ToastService);
+
     this.groupForm = this.formDetails.groupData || formBuilder.group({
       name: [null],
       adminEmail: [null],

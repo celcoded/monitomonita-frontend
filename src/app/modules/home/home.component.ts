@@ -19,13 +19,20 @@ import { UserService } from '../../services/user.service';
     styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnDestroy {
-    groupService = inject(GroupService);
-    userService = inject(UserService);
-    router = inject(Router);
-    toastService = inject(ToastService);
+    groupService: GroupService;
+    userService: UserService;
+    router: Router;
+    toastService: ToastService;
     groupCode: string = ''
 
     subscriptions = new Subscription();
+
+    constructor() {
+        this.groupService = inject(GroupService);
+        this.userService = inject(UserService);
+        this.router = inject(Router);
+        this.toastService = inject(ToastService);
+    }
 
     enterGroup() {
         if (!this.groupCode) return;
