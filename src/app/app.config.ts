@@ -4,6 +4,9 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './interceptors/auth.interceptor';
+import { provideStore } from '@ngrx/store';
+import { reducers, metaReducers } from './store/reducers';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -11,6 +14,8 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([
         authInterceptor
-    ]))
-  ]
+    ])),
+    provideStore(reducers, { metaReducers }),
+    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() })
+]
 };

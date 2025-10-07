@@ -17,6 +17,9 @@ import { environment } from '../../../../environments/environment';
 import { wishlistInput } from '../../../interfaces/input';
 import { WishlistItemComponent } from "../../../components/wishlist-item/wishlist-item.component";
 import { validUrlPattern } from '../../../utils/validators';
+import { select, Store } from '@ngrx/store';
+import { GroupActions } from '../../../store/actions/group.actions';
+import { selectGroup } from '../../../store/selectors/group.selectors';
 import { IEncryptedData } from '../../../interfaces/general';
 
 @Component({
@@ -75,8 +78,9 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
   toastService: ToastService;
   router: Router;
   subscriptions = new Subscription();
-  // store: Store;
+  store: Store;
 
+  testGroup$;
   getErrorMessage = getErrorMessage;
 
   constructor(
@@ -87,7 +91,9 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
     this.userService = inject(UserService);
     this.toastService = inject(ToastService);
     this.router = inject(Router);
-    // this.store = inject(Store);
+    this.store = inject(Store);
+
+    this.testGroup$ = this.store.pipe(select(selectGroup));
 
     this.userForm = formBuilder.group({
       userId: [null, [Validators.required]]
@@ -106,6 +112,10 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    this.testGroup$.subscribe(data => {
+      console.log('Group from Store:', data);
+    })
+
     this.templates = {
       welcomeTab: this.welcomeTabRef, 
       enteredGroup: this.enteredGroupRef, 
@@ -133,10 +143,12 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
     } else {
       const data = this.groupService.getCurrentGroup();
       if (data) {
+        this.store.dispatch(GroupActions.enterGroup({data}));
         decryptObject(data.content, data.iv, data.tag, data.key).then((decryptedData) => {
           this.groupDetails = decryptedData as IGroup;
           this.isAllowedToJoin = this.groupDetails ? this.groupDetails?.rules?.includes(groupRules.ANYONE_CAN_JOIN) && this.groupDetails?.cutoffDate > moment().valueOf() && this.groupDetails?.endDate > moment().valueOf() : false;
           if (this.code !== this.groupDetails?.code) {
+            this.store.dispatch(GroupActions.leaveGroup());
             this.groupService.clearCurrentGroup();
             this.userService.clearCurrentUser();
             this.groupService.getEncryptedDetailsByCode(this.code).subscribe({
@@ -256,6 +268,10 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
   }
 
   exitGroup() {
+    this.testGroup$.subscribe(data => {
+      console.log('Group from Store:', data);
+    })
+    this.store.dispatch(GroupActions.leaveGroup());
     this.userService.clearCurrentUser();
     this.groupService.clearCurrentGroup();
 
@@ -279,6 +295,7 @@ export class GroupComponent implements AfterViewInit, OnDestroy {
               subtext: `${this.groupDetails?.name} has been deleted.`,
               type: toastTypes.SUCCESS
             })
+            this.store.dispatch(GroupActions.leaveGroup());
             this.groupService.clearCurrentGroup();
             this.router.navigate([`/`]);
           },
